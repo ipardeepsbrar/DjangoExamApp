@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 # <HINT> Import any new Models here
-from .models import Course, Enrollment
+from .models import Course, Enrollment, Question, Choice
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
@@ -87,6 +87,15 @@ class CourseListView(generic.ListView):
 class CourseDetailView(generic.DetailView):
     model = Course
     template_name = 'onlinecourse/course_detail_bootstrap.html'
+
+# def course_details(request, pk):
+#     context = {}
+#     course = Course.objects.get(id=pk)
+    # questions = Question.objects.filter(for_course = pk)
+    # questions = course.question_set.all()
+    # context['course'] = course
+    # context['questions'] = questions
+    # return render(request, 'onlinecourse/course_detail_bootstrap.html', context=context)
 
 
 def enroll(request, course_id):
