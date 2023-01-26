@@ -1,5 +1,6 @@
+import os
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 # <HINT> Import any new Models here
 from .models import Course, Enrollment, Question, Choice, Submission
 from django.contrib.auth.models import User
@@ -122,14 +123,16 @@ def enroll(request, course_id):
 def submit(request, course_id):
     enroll_object = Enrollment.objects.get(user=request.user, course=course_id)
     sub_obj = Submission.objects.create(enrollment = enroll_object)
-    submitted_anwsers = []
+    # submitted_anwsers = []
     for key in request.POST:
         if key.startswith('choice'):
             value = request.POST[key]
             choice_id = int(value)
-            submitted_anwsers.append(choice_id)
-    sub_obj.choices = submitted_anwsers
-    redirect('onlinecourse:show_exam_result')
+            # submitted_anwsers.append(choice_id)
+            choice = Choice.objects.get(id = choice_id)
+            sub_obj.choices.add(choice)
+    return HttpResponseRedirect(reverse(viewname = 'onlinecourse:result', args=(course_id, sub_obj.id)))
+    # redirect('onlinecourse:show_exam_result')
 
 # <HINT> A example method to collect the selected choices from the exam form from the request object
 #def extract_answers(request):
@@ -151,4 +154,18 @@ def submit(request, course_id):
 def show_exam_result(request, course_id, submission_id):
     course = Course.objects.get(id = course_id)
     submission = Submission.objects.get(id = submission_id)
+    totalquestions = course.question_set.all().count()
+    # print(totalquestions, os.getcwd())
+    totalscore = 0
+    allchoices = submission.choices.all()
+    for choice in allchoices:
+        answered = choice.for_question.is_get_score(allchoices)
+        if answered:
+            totalscore += choice.for_question.grade_point 
+
+    grade = totalscore * (100/(totalquestions * 2))
+    print(grade, os.getcwd())
+    context = {'course': course, 'selected_ids': allchoices, 'grade': int(grade)}
+    # return HttpResponse('{}, Your score is {}.'.format(course, totalscore))
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context=context)
     
